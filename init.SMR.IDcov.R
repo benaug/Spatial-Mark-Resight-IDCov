@@ -4,7 +4,7 @@ e2dist<- function (x, y){
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
+init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
   library(abind)
   #extract observed data
   this.j=data$this.j
@@ -19,17 +19,16 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   buff<- data$buff
   M.both=M1+M2
   locs=data$locs
-  #Assuming there is always marked and unmarked guys captured
   G.marked=data$G.marked
-  G.unmarked=data$G.unmarked
+  G.obs=data$G.obs
   n.cat=data$IDlist$n.cat
   IDcovs=data$IDlist$IDcovs
   n.levels=unlist(lapply(IDcovs,length))
   if(!is.matrix(G.marked)){
     G.marked=matrix(G.marked)
   }
-  if(!is.matrix(G.unmarked)){
-    G.unmarked=matrix(G.unmarked)
+  if(!is.matrix(G.obs)){
+    G.obs=matrix(G.obs)
   }
   if(!is.list(IDcovs)){
     stop("IDcovs must be a list")
@@ -37,8 +36,8 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   if(ncol(G.marked)!=n.cat){
     stop("G.marked needs n.cat number of columns")
   }
-  if(ncol(G.unmarked)!=n.cat){
-    stop("G.unmarked needs n.cat number of columns")
+  if(ncol(G.obs)!=n.cat){
+    stop("G.obs needs n.cat number of columns")
   }
   
   xlim<- c(min(X[,1]),max(X[,1]))+c(-buff, buff)
@@ -57,28 +56,10 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   useMarkednoID=FALSE
   if(n.samp2>0){
     useMarkednoID=TRUE
-    G.marked.noID=data$G.marked.noID
-    if(!is.matrix(G.marked.noID)){
-      G.marked.noID=matrix(G.marked.noID)
-    }
-    if(ncol(G.marked.noID)!=n.cat){
-      stop("G.marked.noID needs n.cat number of columns")
-    }
-  }else{
-    G.marked.noID=matrix(0,nrow=0,ncol=n.cat)
   }
   useUnk=FALSE
   if(n.samp4>0){
     useUnk=TRUE
-    G.unk=data$G.unk
-    if(!is.matrix(G.unk)){
-      G.unk=matrix(G.unk)
-    }
-    if(ncol(G.unk)!=n.cat){
-      stop("G.unk needs n.cat number of columns")
-    }
-  }else{
-    G.unk=matrix(0,nrow=0,ncol=n.cat)
   }
   
   #build y.marked
@@ -87,23 +68,8 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
     y.marked[ID.marked[l],this.j[l]]=y.marked[ID.marked[l],this.j[l]]+1
   }
   
-  #disassemble G.marked
-  G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
-  idx=1
-  for(i in 1:n.marked){
-    for(j in 1:J){
-      if(y.marked[i,j]>0){
-        for(l in 1:y.marked[i,j]){
-          G.marked.ID[idx,]=G.marked[i,]
-          idx=idx+1
-        }
-      }
-    }
-  }
-  
   G.type=rep(c(1,1,2,0),times=c(n.samp1,n.samp2,n.samp3,n.samp4))
-  # G.fixed=c(rep(TRUE,n.samp1),rep(FALSE,n.samp2+n.samp3+n.samp4))
-  G.obs=cbind(G.type,rbind(G.marked.ID,G.marked.noID,G.unmarked,G.unk))
+  G.obs=cbind(G.type,G.obs)
   
   #initialize unknown IDs
   G.true=matrix(0,nrow=M.both,ncol=n.cat)
@@ -119,7 +85,20 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
     y.true2D=rbind(y.true2D,matrix(0,nrow=M1+M2-n.marked,ncol=J))
   }
   if(M1<n.marked)stop("M1 must be larger than the number of marked individuals.")
-  #marked noID first
+  
+  #Make sure G.obs for marked ID samples matches G.marked 
+  for(l in 1:(n.samp1)){
+    obsidx1=which(G.obs[l,]!=0)
+    obsidx2=which(G.true[ID.marked[l],]!=0)
+    obsidx.use=intersect(obsidx1,obsidx2)
+    if(!all(G.true[ID.marked[l],obsidx.use]==G.obs[l,obsidx.use]))stop(paste("G.obs for sample",l,"does not match the corresponding G.true"))
+    if(any(G.true[ID.marked[l],obsidx1]==0))stop(paste("G.obs for sample",l,"implies a corresponding element of G.true is not actually missing. (coded as 0 when actually known"))
+
+  }
+  
+  
+  
+  #marked noID
   if(useMarkednoID){
     if(marktype=="natural"){
       for(l in (n.samp1+1):(n.samp1+n.samp2)){

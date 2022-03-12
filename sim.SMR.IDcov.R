@@ -333,7 +333,7 @@ sim.SMR.IDcov<-
     }
     
     #disassemble y.marked
-    # G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
+    G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
     ID.marked=rep(NA,sum(y.marked))
     idx=1
@@ -344,6 +344,7 @@ sim.SMR.IDcov<-
             for(l in 1:y.marked[i,j,k]){
               y.marked.ID[idx,j,k]=1
               ID.marked[idx]=i
+              G.marked.ID[idx,]=G.marked[i,]
               idx=idx+1
             }
           }
@@ -378,9 +379,21 @@ sim.SMR.IDcov<-
     ID=c(ID.marked,IDmnoID,IDum,IDunk)
     n.M=sum(rowSums(y[1:n.marked,,])>0)
     n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    
+    #actually, let's combine all types into G.obs here
+    if(!any(is.na(G.unk))&!any(is.na(G.marked.noID))){
+      G.obs=rbind(G.marked.ID,G.marked.noID,G.unmarked,G.unk)
+    }else if(!any(is.na(G.unk))&any(is.na(G.marked.noID))){
+      G.obs=rbind(G.marked.ID,G.unmarked,G.unk)
+    }else if(any(is.na(G.unk))&!any(is.na(G.marked.noID))){
+      G.obs=rbind(G.marked.ID,G.marked.noID,G.unmarked)
+    }else{
+      G.obs=rbind(G.marked.ID,G.unmarked)
+    }
+    
 
     out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
-              G.marked=G.marked,G.unmarked=G.unmarked,G.unk=G.unk,G.marked.noID=G.marked.noID, #observed IDcov data
+              G.marked=G.marked,G.obs=G.obs, #observed IDcov data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,IDlist=list(n.cat=n.cat,IDcovs=IDcovs),
               y=y,s=s, ID=ID,#true data
               X=X,K=K,K1D=K1D,buff=buff,xlim=xlim,ylim=ylim)

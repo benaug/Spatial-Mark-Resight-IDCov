@@ -50,7 +50,7 @@ theta.unmarked=0.75 #prob known marked status. #P(ID, Marked no ID, unk status)=
 marktype="premarked" #are individuals premarked, or naturally marked?
 # marktype="natural"
 obstype="poisson"
-tlocs=0 #number of telemetry locs/marked individual. For "premarked"
+tlocs=10 #number of telemetry locs/marked individual. For "premarked"
 #categorical ID covariate stuff
 n.cat=2  #number of ID categories (not including marked status)
 gamma=IDcovs=vector("list",n.cat) #population frequencies of each category level. Assume equal here.
@@ -75,20 +75,18 @@ head(data$samp.type) #vector of each samp.type of each detection. Must be in thi
 table(data$samp.type)
 head(data$this.j) #trap of capture for each sample
 head(data$this.k) #occasion of each capture for each sample (not used in this "2D" sampler)
-head(data$ID.marked) #true ID's for marked and identified samples ()
+head(data$ID.marked) #true ID's for marked and identified samples
+#here are observed ID covariate data. Missing values coded with "0" instead of "NA"
+dim(data$G.marked) #ID covs for marked individuals (can be missing, coded with 0, though not simulated) n.marked x n.cat
+dim(data$G.obs) #ID covs for each sample. n.samples x n.cat
 str(data$locs) #possibly telemetry. n.marked x tlocs x 2 array (or ragged array if number of locs/ind differ). 
 #Rows are 1:n.marked individuals, columns are max telemetry points for a single
 #individual, fill in NAs for inds with no telemetry and/or inds without max number of telemetry points.
 #in latter case, order telemetry points first, then NAs
 
-#here are observed ID covariate data. Missing values coded with "0" instead of "NA"
-head(data$G.marked) #ID covs for marked individuals (can be NA, though not simulated) n.marked x n.cat
-head(data$G.marked.noID) #ID covs for marked no ID samples. 
-nrow(data$G.marked.noID)==sum(data$samp.type=="markednoID") #one row per marked no ID sample
-head(data$G.unmarked) #ID covs for unmarked samples. 
-nrow(data$G.unmarked)==sum(data$samp.type=="unmarked") #one row per unmarked sample
-head(data$G.unk) #ID covs for unknown marked status samples. 
-nrow(data$G.unk)==sum(data$samp.type=="unk") #one row per unknown marked status sample
+#note, the sample-level data is this: the type, the trap of capture, the observed ID covs
+tmp=data.frame(samp.type=data$samp.type,this.j=data$this.j,G.obs=data$G.obs)
+head(tmp)
 
 ####Fit model in Nimble####
 if(marktype=="natural"){
@@ -109,7 +107,7 @@ inits=list(lam0=lam0,sigma=sigma,gamma=gamma)
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
-nimbuild=init.SMR(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
+nimbuild=init.SMR.IDcov(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
 
 #We include marked/unmarked status as the first ID category for the Nimble sampler, so add 1
 n.cat.nim=n.cat+1
@@ -148,13 +146,13 @@ z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
 
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylimtel.inds=nimbuild$tel.inds,
-#                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
-# Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
-#               locs=data$locs)
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
+                n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
+              locs=data$locs)
 
 # set parameters to monitor
 parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat',
