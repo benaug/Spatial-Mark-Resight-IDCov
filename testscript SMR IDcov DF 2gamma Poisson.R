@@ -1,8 +1,10 @@
 #This version allows for categorical ID covariates observable with or without individual ID of the sample.
 #These covariates provide ID exclusions for the latent ID samples, improving precision.
-#These covariates can also be used to model other parameters. See other testscripts for how to do this.
-#Not done here.
-
+#This version allows lam0 and sigma to vary as a function of the first ID cov.  (e.g. sex-specific)
+#This version also estimates separate population frequencies for the ID covs for marked and unmarked.
+#BUT, I haven't included a data simulator--using one that assumes they are the same. This model
+#likely only makes sense for "premarked", not "natural" marks because in the latter, the different
+#observed gamma freqencies are just the product of the capture process.
 
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID
@@ -26,21 +28,24 @@
 #event 3 is you don't know mark status or ID (unknown marked status samples)
 
 library(nimble)
-source("sim.SMR.IDcov.R")
-source("NimbleModel SMR IDcov Poisson.R")
-source("NimbleFunctions SMR IDcov Poisson.R")
-source("init.SMR.IDcov.R")
+source("sim.SMR.IDcov.DF.R")
+source("NimbleModel SMR IDcov DF 2gamma Poisson.R")
+source("NimbleFunctions SMR IDcov 2gamma Poisson.R") #Need this version for correct custom GSampler
+source("init.SMR.IDcov.DF.R")
 source("sSampler.R")
 
 #make sure to run this line!
 nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
 nimbleOptions('MCMCjointlySamplePredictiveBranches') 
 
-####Simulate some data####
+####Simulate some data#### 
 N=78
-n.marked=12
-lam0=0.5
-sigma=0.5
+n.marked=20 #putting quite a few marked individuals out there so we capture more to inform 2 sets of df parameters
+#detection function parameters vary by first ID cov. lam0 and sigma must be of length n.levels[1]
+#hypothetical sex-specific scenario here where males have larger sigma, but lower lam0.
+#testscript set up to use telemetry here to better estimate df parameters
+lam0=c(0.5,0.25)
+sigma=c(0.5,0.75)
 K=10 #number of occasions
 buff=3 #state space buffer
 X<- expand.grid(3:11,3:11) #make a trapping array
@@ -50,7 +55,7 @@ theta.unmarked=0.75 #prob known marked status. #P(ID, Marked no ID, unk status)=
 marktype="premarked" #are individuals premarked, or naturally marked?
 # marktype="natural"
 obstype="poisson"
-tlocs=0 #number of telemetry locs/marked individual. For "premarked"
+tlocs=10 #number of telemetry locs/marked individual. For "premarked"
 #categorical ID covariate stuff
 n.cat=2  #number of ID categories (not including marked status)
 gamma=IDcovs=vector("list",n.cat) #population frequencies of each category level. Assume equal here.
@@ -64,7 +69,7 @@ theta.cat=rep(1,n.cat)#sample-level IDcov observation probabilities. Data missin
 #data simulator assumes all IDcovs known for marked inds. MCMC sampler accepts missing values coded as 0.
 
 
-data=sim.SMR.IDcov(N=N,n.marked=n.marked,marktype=marktype,
+data=sim.SMR.IDcov.DF(N=N,n.marked=n.marked,marktype=marktype,
              theta.marked=theta.marked,theta.unmarked=theta.unmarked,
              lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
              obstype=obstype,
@@ -103,11 +108,12 @@ M.both=M1+M2
 #model likelihood is finite
 #also use this function checks to make sure theta.marked and theta.unmarked inits are in
 #the correct structure. 
+#Initializing both marked and unmarked inds with same gamma
 inits=list(lam0=lam0,sigma=sigma,gamma=gamma)
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
-nimbuild=init.SMR.IDcov(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
+nimbuild=init.SMR.IDcov.DF(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
 
 #We include marked/unmarked status as the first ID category for the Nimble sampler, so add 1
 n.cat.nim=n.cat+1
@@ -132,31 +138,32 @@ G.true.data[,2:n.cat.nim]=NA #columns 2:n.cat.nim are latent. Fixed values for m
 #from truth, it can stop adapting before convergence and mix very poorly.
 Niminits <- list(z=nimbuild$z,s=nimbuild$s,G.true=G.true.init,ID=nimbuild$ID,capcounts=rowSums(nimbuild$y.full),
                  y.full=nimbuild$y.full,y.event=nimbuild$y.event,
-                 gammaMat=gammaMat,theta.unmarked=c(0,0.5,0.5),G.latent=nimbuild$G.latent,
+                 gammaMat.M=gammaMat,gammaMat.UM=gammaMat, #plugging in 1 gammaMat for marked and unmarked gammaMat inits
+                 theta.unmarked=c(0,0.5,0.5),G.latent=nimbuild$G.latent,
                  lam0=inits$lam0,sigma=inits$sigma)
 
-#constants for Nimble
-J=nrow(data$X)
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim)
 
+J=nrow(data$X)
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
 z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 
-Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
-
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+# #If you do not have telemetry use these instead. Make sure to comment out telemetry BUGS code.
 # constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
-#                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim)
 # Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
-#               locs=data$locs)
+#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
+
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
+                n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
+              locs=data$locs)
 
 # set parameters to monitor
-parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat',
-              'n.M','n.UM','N.M','N.UM','N.tot')
+parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat.M',
+              'gammaMat.UM','n.M','n.UM','N.M','N.UM','N.tot')
 #other things we can monitor with separate thinning rate
 parameters2=c("ID","s")
 
@@ -186,7 +193,7 @@ for(i in 1:M.both){
   for(m in 2:n.cat.nim){ #don't need to update first cat bc it is mark status
     conf$addSampler(target = paste("G.true[",i,",",m,"]", sep=""),
                     type = 'GSampler',
-                    control = list(i = i,m=m,M.both=M.both,n.cat=n.cat.nim,n.samples=nimbuild$n.samples,
+                    control = list(i = i,m=m,M1=M1,M.both=M.both,n.cat=n.cat.nim,n.samples=nimbuild$n.samples,
                                    n.levels=n.levels.nim,G.obs=nimbuild$G.obs), silent = TRUE) 
   }
 }

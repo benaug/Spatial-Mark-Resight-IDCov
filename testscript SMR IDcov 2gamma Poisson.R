@@ -2,7 +2,10 @@
 #These covariates provide ID exclusions for the latent ID samples, improving precision.
 #These covariates can also be used to model other parameters. See other testscripts for how to do this.
 #Not done here.
-
+#This version also estimates separate population frequencies for the ID covs for marked and unmarked.
+#BUT, I haven't included a data simulator--using one that assumes they are the same. This model
+#likely only makes sense for "premarked", not "natural" marks because in the latter, the different
+#observed gamma freqencies are just the product of the capture process.
 
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID
@@ -27,8 +30,8 @@
 
 library(nimble)
 source("sim.SMR.IDcov.R")
-source("NimbleModel SMR IDcov Poisson.R")
-source("NimbleFunctions SMR IDcov Poisson.R")
+source("NimbleModel SMR IDcov 2gamma Poisson.R")
+source("NimbleFunctions SMR IDcov 2gamma Poisson.R") #Need this version for correct custom GSampler
 source("init.SMR.IDcov.R")
 source("sSampler.R")
 
@@ -103,6 +106,7 @@ M.both=M1+M2
 #model likelihood is finite
 #also use this function checks to make sure theta.marked and theta.unmarked inits are in
 #the correct structure. 
+#Initializing both marked and unmarked inds with same gamma
 inits=list(lam0=lam0,sigma=sigma,gamma=gamma)
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
@@ -132,7 +136,8 @@ G.true.data[,2:n.cat.nim]=NA #columns 2:n.cat.nim are latent. Fixed values for m
 #from truth, it can stop adapting before convergence and mix very poorly.
 Niminits <- list(z=nimbuild$z,s=nimbuild$s,G.true=G.true.init,ID=nimbuild$ID,capcounts=rowSums(nimbuild$y.full),
                  y.full=nimbuild$y.full,y.event=nimbuild$y.event,
-                 gammaMat=gammaMat,theta.unmarked=c(0,0.5,0.5),G.latent=nimbuild$G.latent,
+                 gammaMat.M=gammaMat,gammaMat.UM=gammaMat, #plugging in 1 gammaMat for marked and unmarked gammaMat inits
+                 theta.unmarked=c(0,0.5,0.5),G.latent=nimbuild$G.latent,
                  lam0=inits$lam0,sigma=inits$sigma)
 
 #constants for Nimble
@@ -155,8 +160,8 @@ Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3
 #               locs=data$locs)
 
 # set parameters to monitor
-parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat',
-              'n.M','n.UM','N.M','N.UM','N.tot')
+parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat.M',
+              'gammaMat.UM','n.M','n.UM','N.M','N.UM','N.tot')
 #other things we can monitor with separate thinning rate
 parameters2=c("ID","s")
 
@@ -186,7 +191,7 @@ for(i in 1:M.both){
   for(m in 2:n.cat.nim){ #don't need to update first cat bc it is mark status
     conf$addSampler(target = paste("G.true[",i,",",m,"]", sep=""),
                     type = 'GSampler',
-                    control = list(i = i,m=m,M.both=M.both,n.cat=n.cat.nim,n.samples=nimbuild$n.samples,
+                    control = list(i = i,m=m,M1=M1,M.both=M.both,n.cat=n.cat.nim,n.samples=nimbuild$n.samples,
                                    n.levels=n.levels.nim,G.obs=nimbuild$G.obs), silent = TRUE) 
   }
 }
