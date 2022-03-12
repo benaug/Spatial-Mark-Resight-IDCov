@@ -50,7 +50,7 @@ theta.unmarked=0.75 #prob known marked status. #P(ID, Marked no ID, unk status)=
 marktype="premarked" #are individuals premarked, or naturally marked?
 # marktype="natural"
 obstype="poisson"
-tlocs=10 #number of telemetry locs/marked individual. For "premarked"
+tlocs=0 #number of telemetry locs/marked individual. For "premarked"
 #categorical ID covariate stuff
 n.cat=2  #number of ID categories (not including marked status)
 gamma=IDcovs=vector("list",n.cat) #population frequencies of each category level. Assume equal here.
@@ -146,13 +146,13 @@ z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
 
-#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
-                n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
-Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
-              locs=data$locs)
+# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
+#                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+# Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
+#               locs=data$locs)
 
 # set parameters to monitor
 parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked','gammaMat',
