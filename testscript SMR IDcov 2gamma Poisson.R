@@ -5,7 +5,7 @@
 #This version also estimates separate population frequencies for the ID covs for marked and unmarked.
 #BUT, I haven't included a data simulator--using one that assumes they are the same. This model
 #likely only makes sense for "premarked", not "natural" marks because in the latter, the different
-#observed gamma freqencies are just the product of the capture process.
+#observed gamma frequencies are just the product of the capture process.
 
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID

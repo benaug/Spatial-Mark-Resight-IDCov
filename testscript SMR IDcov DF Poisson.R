@@ -213,8 +213,10 @@ for(i in 1:M.both){
 #This sampler is slower, so not worth it if data is not so sparse there is strong posterior correlation
 #between lam0 and sigma
 conf$removeSampler(c("lam0","sigma"))
-conf$addSampler(target = c("lam0","sigma"),type = 'AF_slice',
-                control = list(adaptive=TRUE),silent = TRUE)
+for(i in 1:n.levels[2]){
+  conf$addSampler(target = c(paste("lam0[",i,"]"),paste("sigma[",i,"]")),type = 'AF_slice',
+                  control = list(adaptive=TRUE),silent = TRUE)
+}
 
 # Build and compile
 Rmcmc <- buildMCMC(conf)

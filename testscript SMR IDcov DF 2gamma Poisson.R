@@ -4,7 +4,7 @@
 #This version also estimates separate population frequencies for the ID covs for marked and unmarked.
 #BUT, I haven't included a data simulator--using one that assumes they are the same. This model
 #likely only makes sense for "premarked", not "natural" marks because in the latter, the different
-#observed gamma freqencies are just the product of the capture process.
+#observed gamma frequencies are just the product of the capture process.
 
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID
@@ -218,8 +218,10 @@ for(i in 1:M.both){
 #This sampler is slower, so not worth it if data is not so sparse there is strong posterior correlation
 #between lam0 and sigma
 conf$removeSampler(c("lam0","sigma"))
-conf$addSampler(target = c("lam0","sigma"),type = 'AF_slice',
-                control = list(adaptive=TRUE),silent = TRUE)
+for(i in 1:n.levels[2]){
+  conf$addSampler(target = c(paste("lam0[",i,"]"),paste("sigma[",i,"]")),type = 'AF_slice',
+                  control = list(adaptive=TRUE),silent = TRUE)
+}
 
 # Build and compile
 Rmcmc <- buildMCMC(conf)
