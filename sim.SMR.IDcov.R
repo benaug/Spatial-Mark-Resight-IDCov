@@ -56,7 +56,7 @@ sim.SMR.IDcov<-
       } 
     }else if(obstype=="negbin"){
       if(is.na(lam0))stop("must provide lam0 for negbin obstype")
-      if(is.na(theta.d))stop("Must provide theta for negbin obstype")
+      if(is.na(theta.d))stop("Must provide theta.d for negbin obstype")
       lamd<- lam0*exp(-D*D/(2*sigma*sigma))
       for(i in 1:N){
         for(j in 1:J){

@@ -1,8 +1,8 @@
 NimModel <- nimbleCode({
   #detection function priors as function of first ID cov (excluding marked status, which is 1st)
   for(i in 1:n.levels[2]){
-    lam0[i]~dunif(0,2)
-    sigma[i]~dunif(0,2)
+    lam0[i]~dunif(0,15)
+    sigma[i]~dunif(0,10)
   }
   #data augmentation priors for marked (1) and unmarked (2) individuals
   psi1~dunif(0,1)
