@@ -53,13 +53,13 @@ NimModel <- nimbleCode({
     y.event[i,1:J,2:3] ~ dmulti2(y.full[i,1:J],prob=theta.unmarked[2:3],capcounts=capcounts[i])
   }
   
-  # #If you have telemetry
-  # for(i in 1:n.tel.inds){
-  #   for(m in 1:n.locs.ind[i]){
-  #     locs[tel.inds[i],m,1]~dnorm(s[tel.inds[i],1],sd=sigma)
-  #     locs[tel.inds[i],m,2]~dnorm(s[tel.inds[i],2],sd=sigma)
-  #   }
-  # }
+  #If you have telemetry
+  for(i in 1:n.tel.inds){
+    for(m in 1:n.locs.ind[i]){
+      locs[tel.inds[i],m,1]~dnorm(s[tel.inds[i],1],sd=sigma)
+      locs[tel.inds[i],m,2]~dnorm(s[tel.inds[i],2],sd=sigma)
+    }
+  }
   
   #calculate number of marked and unmarked inds captured and abundance
   capcounts[1:M.both] <- Getcapcounts(y.full=y.full[1:M.both,1:J])

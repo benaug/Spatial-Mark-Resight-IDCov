@@ -152,22 +152,22 @@ Niminits <- list(z=nimbuild$z,s=nimbuild$s,G.true=G.true.init,ID=nimbuild$ID,cap
 
 #constants for Nimble
 J=nrow(data$X)
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim)
+# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
 z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 
-Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
-
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-#                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
-#                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
 # Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
-#               locs=data$locs)
+#               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
+
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+                n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
+                n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+              G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
+              locs=data$locs)
 
 # set parameters to monitor
 parameters=c('psi1','psi2','lam0','sigma','theta.d','theta.marked','theta.unmarked','gammaMat.M',
