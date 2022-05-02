@@ -4,7 +4,7 @@ e2dist<- function (x, y){
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-init.SMR.IDcov.DF.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
+init.SMR.IDcov.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
   N.session=nrow(data$this.j)
   n.samples=rowSums(!is.na(data$this.j))
   init.session=vector("list",N.session)
@@ -15,8 +15,8 @@ init.SMR.IDcov.DF.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="prem
   for(g in 1:N.session){
     inits.use[[g]]=vector("list",length(parms))
     names(inits.use[[g]])=parms
-    inits.use[[g]]$lam0=inits$lam0[g,]
-    inits.use[[g]]$sigma=inits$sigma[g,]
+    inits.use[[g]]$lam0=inits$lam0[g]
+    inits.use[[g]]$sigma=inits$sigma[g]
     if(obstype=="negbin"){
       inits.use[[g]]$theta.d=inits$theta.d[g]
     }
@@ -48,7 +48,7 @@ init.SMR.IDcov.DF.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="prem
                   ID.marked=data$ID.marked[[g]],n.marked=M1[g],locs=locs.use,X=data$X[[g]],buff=data$buff[g],
                   K1D=data$K1D[[g]],G.marked=data$G.marked[g,1:data$n.marked[g],],G.obs=data$G.obs[g,1:n.samples[g],],
                   IDlist=data$IDlist[[g]])
-    init.session[[g]]=init.SMR.IDcov.DF(data.use,inits.use[[g]],M1=M1[g],M2=M2[g],marktype=marktype,obstype=obstype)
+    init.session[[g]]=init.SMR.IDcov(data.use,inits.use[[g]],M1=M1[g],M2=M2[g],marktype=marktype,obstype=obstype)
   }
 
   J=unlist(lapply(data$X,nrow))
