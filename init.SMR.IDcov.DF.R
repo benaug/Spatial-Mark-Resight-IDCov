@@ -331,7 +331,7 @@ init.SMR.IDcov.DF=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstyp
   #Stuff category level probabilities into a ragged matrix. (may have different numbers of levels)
   gammaMat=matrix(0,nrow=n.cat,ncol=max(n.levels))
   for(l in 1:n.cat){
-    gammaMat[l,1:n.levels[l]]=gamma[[l]]
+    gammaMat[l,1:n.levels[l]]=inits$gamma[[l]]
   }
   
   #calculate G.latent, which indicies of G currently latent
