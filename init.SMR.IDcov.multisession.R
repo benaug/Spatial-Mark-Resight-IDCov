@@ -24,7 +24,7 @@ init.SMR.IDcov.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premark
   for(g in 1:N.session){
     #append gamma inits
     gamma=vector("list",data$IDlist[[g]]$n.cat) #population frequencies of each category level. Assume equal here.
-    n.levels=rep(2,data$IDlist[[g]]$n.cat) #number of levels per IDcat
+    n.levels=unlist(lapply(data$IDlist[[g]]$IDcovs,length)) #number of levels per IDcat
     for(i in 1:data$IDlist[[g]]$n.cat){
       gamma[[i]]=rep(1/n.levels[i],n.levels[i])
     }
