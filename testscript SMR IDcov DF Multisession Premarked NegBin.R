@@ -131,7 +131,7 @@ for(g in 1:N.session){
 }
 (N.init-N.UM.init)==n.marked #should be n.marked[g] individuals in initialized data
 library(abind)
-gammaMat.init=array(NA,dim=c(N.session,max(n.cat.nim),max(n.levels)))
+gammaMat.init=array(NA,dim=c(N.session,max(n.cat.nim),max(nimbuild$n.levels)))
 gammaMat.init[,-1,]=nimbuild$gammaMat
 gammaMat.init[,1,1:2]=0.5
 
