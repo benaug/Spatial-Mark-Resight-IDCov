@@ -94,10 +94,12 @@ init.SMR.IDcov.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premark
   }
   
   #remove unused telemetry dimensions if not all marked individuals telemetered
-  rem.idx=which(colSums(is.na(n.locs.ind))==N.session)
-  if(length(rem.idx)>0){
-    n.locs.ind=n.locs.ind[,-rem.idx]
-    tel.inds=tel.inds[,-rem.idx]
+  if(anyTelemetry){
+    rem.idx=which(colSums(is.na(n.locs.ind))==N.session)
+    if(length(rem.idx)>0){
+      n.locs.ind=n.locs.ind[,-rem.idx]
+      tel.inds=tel.inds[,-rem.idx]
+    }
   }
   
   #IDcov stuff
