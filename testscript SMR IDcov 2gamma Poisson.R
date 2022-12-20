@@ -35,9 +35,10 @@ source("NimbleFunctions SMR IDcov 2gamma Poisson.R") #Need this version for corr
 source("init.SMR.IDcov.R")
 source("sSampler.R")
 
-#make sure to run this line!
-nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
-nimbleOptions('MCMCjointlySamplePredictiveBranches') 
+#If using Nimble version 0.13.1 and you must run this line 
+nimbleOptions(determinePredictiveNodesInModel = FALSE)
+# #If using Nimble before version 0.13.1, run this line instead
+# nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
 
 ####Simulate some data####
 N=78

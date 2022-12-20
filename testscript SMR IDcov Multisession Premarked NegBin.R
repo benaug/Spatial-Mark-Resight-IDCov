@@ -16,9 +16,10 @@ source("init.SMR.IDcov.multisession.R")
 source("init.SMR.IDcov.R")
 source("sSampler Multisession.R")
 
-#make sure to run this line!
-nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
-nimbleOptions('MCMCjointlySamplePredictiveBranches') 
+#If using Nimble version 0.13.1 and you must run this line 
+nimbleOptions(determinePredictiveNodesInModel = FALSE)
+# #If using Nimble before version 0.13.1, run this line instead
+# nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
 
 ####Simulate some data####
 #Here, I'll simulate 3 populations with different n.marked, K, X, and state space areas
@@ -207,7 +208,7 @@ for(g in 1:N.session){
   }
 }
 
-z.ups=c(25,25,25) # how many z proposals per iteration per session?
+z.ups=round(M*0.25) # how many z proposals per iteration per session?
 J=nimbuild$J
 conf$removeSampler("N")
 for(g in 1:N.session){
