@@ -93,21 +93,22 @@ sim.SMR.IDcov<-
       y.marked=array(y.marked,dim=c(1,J,K))
       G.marked=matrix(G.marked,1,n.cat)
     }
-    
     n.samples=sum(y[umguys,,])
     G.unmarked=matrix(NA,nrow=n.samples,ncol=n.cat)
     y.unmarked=array(0,dim=c(n.samples,J,K))
     IDum=rep(NA,n.samples)
-    idx=1
-    for(i in 1:length(umguys)){
-      for(j in 1:J){ #then traps
-        for(k in 1:K){ #then occasions
-          if(y[umguys[i],j,k]>0){ #is there at least one sample here?
-            for(l in 1:y[umguys[i],j,k]){ #then samples
-              G.unmarked[idx,]=G.true[umguys[i],]
-              y.unmarked[idx,j,k]=1
-              IDum[idx]=umguys[i]
-              idx=idx+1
+    if(n.samples>0){
+      idx=1
+      for(i in 1:length(umguys)){
+        for(j in 1:J){ #then traps
+          for(k in 1:K){ #then occasions
+            if(y[umguys[i],j,k]>0){ #is there at least one sample here?
+              for(l in 1:y[umguys[i],j,k]){ #then samples
+                G.unmarked[idx,]=G.true[umguys[i],]
+                y.unmarked[idx,j,k]=1
+                IDum[idx]=umguys[i]
+                idx=idx+1
+              }
             }
           }
         }
@@ -188,11 +189,19 @@ sim.SMR.IDcov<-
         #extract um history to unk
         y.unk2=y.unmarked[unk.idx,,]
         G.unk2=G.unmarked[unk.idx,]
+        if(nunk==1){ #reformat to array
+          y.unk2=array(y.unk2,dim=c(1,J,K))
+          G.unk2=matrix(G.unk2,1,n.cat)
+        }
         IDunk2=IDum[unk.idx]
         IDunkType2=rep("unmarked",length(IDunk2))
         #remove unk from um history
         y.unmarked=y.unmarked[-unk.idx,,]
         G.unmarked=G.unmarked[-unk.idx,]
+        if(length(dim(y.unmarked))==2){ #reformat to array
+          y.unmarked=array(y.unmarked,dim=c(1,J,K))
+          G.unmarked=matrix(G.unmarked,1,n.cat)
+        }
         IDum=IDum[-unk.idx]
       }else{
         IDunk2=IDunkType2=NA
@@ -229,11 +238,20 @@ sim.SMR.IDcov<-
       G.unk=G.unk2
     }
     
+    if(is.null(dim(G.unmarked))){ #reformat as matrix
+      G.unmarked=matrix(G.unmarked,nrow=1)
+    }
+    if(is.null(dim(G.unk))){ #reformat as matrix
+      G.unk=matrix(G.unk,nrow=1)
+    }
+    
     #Observation failure for category levels in unmarked, unknown, and marked no ID if present
-    for(l in 1:n.cat){
-      drop=which(rbinom(nrow(G.unmarked),1,theta.cat[l])==0)
-      if(length(drop)>0){
-        G.unmarked[drop,l]=0 #coding missing data as 0
+    if(!is.na(G.unmarked[1])){
+      for(l in 1:n.cat){
+        drop=which(rbinom(nrow(G.unmarked),1,theta.cat[l])==0)
+        if(length(drop)>0){
+          G.unmarked[drop,l]=0 #coding missing data as 0
+        }
       }
     }
     if(!is.na(G.unk[1])){
@@ -279,7 +297,7 @@ sim.SMR.IDcov<-
       stop("Error rebuilding data. Report bug.")
     }
     dimnames(y.unk)=NULL
-    if(all(!is.na(G.unk))){
+    if(all(!is.na(G.unk))&nrow(G.unk)>0){
       for(i in 1:nrow(G.unk)){
         for(m in 1:n.cat){
           if(G.unk[i,m]!=0){
@@ -288,7 +306,7 @@ sim.SMR.IDcov<-
         }
       }
     }
-    if(all(!is.na(G.unmarked))){
+    if(all(!is.na(G.unmarked))&nrow(G.unmarked)>0){
       for(i in 1:nrow(G.unmarked)){
         for(m in 1:n.cat){
           if(G.unmarked[i,m]!=0){
@@ -397,7 +415,11 @@ sim.SMR.IDcov<-
       ID=c(ID,IDunk)
     }
     n.M=sum(rowSums(y[1:n.marked,,])>0)
-    n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    if(n.marked<N){
+      n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    }else{
+      n.UM=0
+    }
     
     #actually, let's combine all types into G.obs here
     if(!any(is.na(G.unk))&!any(is.na(G.marked.noID))){
