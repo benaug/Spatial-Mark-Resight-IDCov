@@ -7,6 +7,8 @@
 
 #data initializer doesn't handle telemetry in some sessions but not others...
 
+#Nimble sampler won't work as is if only 1 marked individual, can be fixed, email Ben
+
 library(nimble)
 source("sim.SMR.IDcov.multisession.R")
 source("sim.SMR.IDcov.R")

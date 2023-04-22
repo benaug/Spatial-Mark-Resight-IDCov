@@ -4,6 +4,8 @@
 #This testscript shows how to share lam0, sigma, and/or expected density across sessions
 #can share theta.marked and theta.unmarked but not done here.
 
+#Nimble sampler won't work as is if only 1 marked individual, can be fixed, email Ben
+
 library(nimble)
 source("sim.SMR.IDcov.multisession.R")
 source("sim.SMR.IDcov.R")

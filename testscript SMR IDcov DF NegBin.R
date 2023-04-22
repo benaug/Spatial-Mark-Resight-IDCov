@@ -29,6 +29,8 @@
 #event 2 is you know the mark status, but not ID (marked, unknown ID or unmarked samples)
 #event 3 is you don't know mark status or ID (unknown marked status samples)
 
+#Nimble sampler won't work as is if only 1 marked individual, can be fixed, email Ben
+
 library(nimble)
 source("sim.SMR.IDcov.DF.R")
 source("NimbleModel SMR IDcov DF NegBin.R")
