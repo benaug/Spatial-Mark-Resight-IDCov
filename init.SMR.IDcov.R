@@ -61,6 +61,10 @@ init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="
   if(n.samp4>0){
     useUnk=TRUE
   }
+  useUnmarked=FALSE
+  if(n.samp3>0){
+    useUnmarked=TRUE
+  }
 
   #build y.marked
   y.marked=matrix(0,M1,J)
@@ -184,51 +188,53 @@ init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="
   }
   #unmarked next...
   nextID=M1+1
-  for(l in (n.samp1+n.samp2+1):(n.samp1+n.samp2+n.samp3)){
-    #can you match an unmarked guy in same trap already assigned an ID?
-    obsidx=which(G.obs[l,]!=0)
-    matches=rep(FALSE,M.both)
-    for(i2 in (M1+1):M.both){#can only match unmarked
-      obsidx2=which(G.true[i2,]!=0)
-      sameobsidx=intersect(obsidx,obsidx2)
-      matches[i2]=all(G.true[i2,sameobsidx]==G.obs[l,sameobsidx])
-    }
-    matches=which(matches)
-    # matches=which(apply(G.true[(M1+1):(M.both),obsidx],1,function(x){all(x==G.obs[l,obsidx])}))+M1 #can only match unmarked
-    if(length(matches)==0){#must be new ID
-      ID[l]=nextID
-      G.true[ID[l],obsidx]=G.obs[l,obsidx]
-      y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-      nextID=nextID+1
-    }else if(length(matches)==1){
-      if(y.true2D[matches,this.j[l]]>0){#caught at same trap?
-        ID[l]=matches
-        y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-        #new sample for this ID might fill in some missing G.true indices
-        notobsidx=which(G.true[ID[l],]==0)
-        G.true[ID[l],notobsidx]=G.obs[l,notobsidx]
-      }else{#must be new ID
+  if(useUnmarked){
+    for(l in (n.samp1+n.samp2+1):(n.samp1+n.samp2+n.samp3)){
+      #can you match an unmarked guy in same trap already assigned an ID?
+      obsidx=which(G.obs[l,]!=0)
+      matches=rep(FALSE,M.both)
+      for(i2 in (M1+1):M.both){#can only match unmarked
+        obsidx2=which(G.true[i2,]!=0)
+        sameobsidx=intersect(obsidx,obsidx2)
+        matches[i2]=all(G.true[i2,sameobsidx]==G.obs[l,sameobsidx])
+      }
+      matches=which(matches)
+      # matches=which(apply(G.true[(M1+1):(M.both),obsidx],1,function(x){all(x==G.obs[l,obsidx])}))+M1 #can only match unmarked
+      if(length(matches)==0){#must be new ID
         ID[l]=nextID
         G.true[ID[l],obsidx]=G.obs[l,obsidx]
         y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
         nextID=nextID+1
+      }else if(length(matches)==1){
+        if(y.true2D[matches,this.j[l]]>0){#caught at same trap?
+          ID[l]=matches
+          y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+          #new sample for this ID might fill in some missing G.true indices
+          notobsidx=which(G.true[ID[l],]==0)
+          G.true[ID[l],notobsidx]=G.obs[l,notobsidx]
+        }else{#must be new ID
+          ID[l]=nextID
+          G.true[ID[l],obsidx]=G.obs[l,obsidx]
+          y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+          nextID=nextID+1
+        }
+      }else{
+        sametrap=y.true2D[matches,this.j[l]]>0
+        if(any(sametrap)){
+          ID[l]=matches[which(sametrap)[1]]
+          y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+          #new sample for this ID might fill in some missing G.true indices
+          notobsidx=which(G.true[ID[l],]==0)
+          G.true[ID[l],notobsidx]=G.obs[l,notobsidx]
+        }else{#must be new ID
+          ID[l]=nextID
+          G.true[ID[l],obsidx]=G.obs[l,obsidx]
+          y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+          nextID=nextID+1
+        }
       }
-    }else{
-      sametrap=y.true2D[matches,this.j[l]]>0
-      if(any(sametrap)){
-        ID[l]=matches[which(sametrap)[1]]
-        y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-        #new sample for this ID might fill in some missing G.true indices
-        notobsidx=which(G.true[ID[l],]==0)
-        G.true[ID[l],notobsidx]=G.obs[l,notobsidx]
-      }else{#must be new ID
-        ID[l]=nextID
-        G.true[ID[l],obsidx]=G.obs[l,obsidx]
-        y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-        nextID=nextID+1
-      }
+      if(nextID>M.both)stop("Need to raise M2 to initialize data.")
     }
-    if(nextID>M.both)stop("Need to raise M2 to initialize data.")
   }
   #then unknown...
   #keeping nextID where it is so we assign non matches to unmarked class
