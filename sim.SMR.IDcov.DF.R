@@ -91,13 +91,13 @@ sim.SMR.IDcov.DF<-
       G.true[c(move,idx),]
     }
     
-    IDmarked=1:n.marked
-    umguys=setdiff(1:N,IDmarked)
+    ID.marked=1:n.marked
+    umguys=setdiff(1:N,ID.marked)
     
     #split sightings into marked and unmarked histories, considering occasion of marking
-    y.marked=y[IDmarked,,]
-    G.marked=G.true[IDmarked,]
-    if(length(IDmarked)==1){ #if only one marked guy, make y.marked an array again
+    y.marked=y[ID.marked,,]
+    G.marked=G.true[ID.marked,]
+    if(length(ID.marked)==1){ #if only one marked guy, make y.marked an array again
       y.marked=array(y.marked,dim=c(1,J,K))
       G.marked=matrix(G.marked,1,n.cat)
     }
@@ -261,8 +261,8 @@ sim.SMR.IDcov.DF<-
     
     #check data
     y.check=y*0
-    for(i in 1:length(IDmarked)){
-      y.check[IDmarked[i],,]=y.marked[i,,]
+    for(i in 1:length(ID.marked)){
+      y.check[ID.marked[i],,]=y.marked[i,,]
     }
     if(length(IDum)>0){
       for(i in 1:length(IDum)){
@@ -319,7 +319,7 @@ sim.SMR.IDcov.DF<-
       locs=array(NA,dim=c(n.marked,tlocs,2))
       for(i in 1:n.marked){
         for(j in 1:tlocs){
-          locs[i,j,]=c(rnorm(1,s[IDmarked[i],1],sigma[G.true[IDmarked[i],1]]),rnorm(1,s[IDmarked[i],2],sigma[G.true[IDmarked[i],1]]))
+          locs[i,j,]=c(rnorm(1,s[ID.marked[i],1],sigma[G.true[ID.marked[i],1]]),rnorm(1,s[ID.marked[i],2],sigma[G.true[ID.marked[i],1]]))
         }
       }
     }else{
@@ -347,21 +347,25 @@ sim.SMR.IDcov.DF<-
     #disassemble y.marked
     G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
-    ID.marked=rep(NA,sum(y.marked))
-    idx=1
-    for(i in 1:n.marked){
-      for(j in 1:J){
-        for(k in 1:K){
-          if(y.marked[i,j,k]>0){
-            for(l in 1:y.marked[i,j,k]){
-              y.marked.ID[idx,j,k]=1
-              ID.marked[idx]=i
-              G.marked.ID[idx,]=G.marked[i,]
-              idx=idx+1
+    if(sum(y.marked)>0){
+      ID.marked=rep(NA,sum(y.marked))
+      idx=1
+      for(i in 1:n.marked){
+        for(j in 1:J){
+          for(k in 1:K){
+            if(y.marked[i,j,k]>0){
+              for(l in 1:y.marked[i,j,k]){
+                y.marked.ID[idx,j,k]=1
+                ID.marked[idx]=i
+                G.marked.ID[idx,]=G.marked[i,]
+                idx=idx+1
+              }
             }
           }
         }
       }
+    }else{
+      ID.marked=c()
     }
     
     n.samp1=nrow(y.marked.ID) #1
@@ -388,9 +392,20 @@ sim.SMR.IDcov.DF<-
                 rep("markednoID",n.samp2),
                 rep("unmarked",n.samp3),
                 rep("unk",n.samp4))
-    ID=c(ID.marked,IDmnoID,IDum,IDunk)
+    ID=ID.marked
+    if(n.samp2>0){
+      ID=c(ID,IDmnoID)
+    }
+    if(n.samp3>0){
+      ID=c(ID,IDum)
+    }
+    if(n.samp4>0){
+      ID=c(ID,IDunk)
+    }
     n.M=sum(rowSums(y[1:n.marked,,])>0)
     n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    
+    
     
     #actually, let's combine all types into G.obs here
     if(!any(is.na(G.unk))&!any(is.na(G.marked.noID))){

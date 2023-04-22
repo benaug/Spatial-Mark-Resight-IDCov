@@ -64,8 +64,10 @@ init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="
 
   #build y.marked
   y.marked=matrix(0,M1,J)
-  for(l in 1:length(ID.marked)){
-    y.marked[ID.marked[l],this.j[l]]=y.marked[ID.marked[l],this.j[l]]+1
+  if(length(ID.marked)>0){ #are there marked guy captures?
+    for(l in 1:length(ID.marked)){
+      y.marked[ID.marked[l],this.j[l]]=y.marked[ID.marked[l],this.j[l]]+1
+    }
   }
 
   G.type=rep(c(1,1,2,0),times=c(n.samp1,n.samp2,n.samp3,n.samp4))
@@ -76,7 +78,11 @@ init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="
   G.true[1:n.marked,]=G.marked
   G.true=cbind(c(rep(1,M1),rep(2,M2)),G.true)
   ID=c(ID.marked,rep(NA,n.samples-length(ID.marked)))
-  nextID=max(ID,na.rm=TRUE)+1
+  if(length(ID.marked)>0){
+    nextID=max(ID,na.rm=TRUE)+1
+  }else{
+    nextID=1
+  }
 
   y.true2D=apply(y.marked,c(1,2),sum)
   if(marktype=="natural"){
@@ -85,18 +91,18 @@ init.SMR.IDcov=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="
     y.true2D=rbind(y.true2D,matrix(0,nrow=M1+M2-n.marked,ncol=J))
   }
   if(M1<n.marked)stop("M1 must be larger than the number of marked individuals.")
-
+  
   #Make sure G.obs for marked ID samples matches G.marked
-  for(l in 1:(n.samp1)){
-    obsidx1=which(G.obs[l,]!=0)
-    obsidx2=which(G.true[ID.marked[l],]!=0)
-    obsidx.use=intersect(obsidx1,obsidx2)
-    if(!all(G.true[ID.marked[l],obsidx.use]==G.obs[l,obsidx.use]))stop(paste("G.obs for sample",l,"does not match the corresponding G.true"))
-    if(any(G.true[ID.marked[l],obsidx1]==0))stop(paste("G.obs for sample",l,"implies a corresponding element of G.true is not actually missing. (coded as 0 when actually known"))
-
+  if(n.samp1>0){
+    for(l in 1:(n.samp1)){
+      obsidx1=which(G.obs[l,]!=0)
+      obsidx2=which(G.true[ID.marked[l],]!=0)
+      obsidx.use=intersect(obsidx1,obsidx2)
+      if(!all(G.true[ID.marked[l],obsidx.use]==G.obs[l,obsidx.use]))stop(paste("G.obs for sample",l,"does not match the corresponding G.true"))
+      if(any(G.true[ID.marked[l],obsidx1]==0))stop(paste("G.obs for sample",l,"implies a corresponding element of G.true is not actually missing. (coded as 0 when actually known"))
+      
+    }
   }
-
-
 
   #marked noID
   if(useMarkednoID){

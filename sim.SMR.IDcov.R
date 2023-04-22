@@ -83,13 +83,13 @@ sim.SMR.IDcov<-
       G.true[c(move,idx),]
     }
     
-    IDmarked=1:n.marked
-    umguys=setdiff(1:N,IDmarked)
+    ID.marked=1:n.marked
+    umguys=setdiff(1:N,ID.marked)
     
     #split sightings into marked and unmarked histories, considering occasion of marking
-    y.marked=y[IDmarked,,]
-    G.marked=G.true[IDmarked,]
-    if(length(IDmarked)==1){ #if only one marked guy, make y.marked an array again
+    y.marked=y[ID.marked,,]
+    G.marked=G.true[ID.marked,]
+    if(length(ID.marked)==1){ #if only one marked guy, make y.marked an array again
       y.marked=array(y.marked,dim=c(1,J,K))
       G.marked=matrix(G.marked,1,n.cat)
     }
@@ -254,8 +254,8 @@ sim.SMR.IDcov<-
     
     #check data
     y.check=y*0
-    for(i in 1:length(IDmarked)){
-      y.check[IDmarked[i],,]=y.marked[i,,]
+    for(i in 1:length(ID.marked)){
+      y.check[ID.marked[i],,]=y.marked[i,,]
     }
     if(length(IDum)>0){
       for(i in 1:length(IDum)){
@@ -312,7 +312,7 @@ sim.SMR.IDcov<-
       locs=array(NA,dim=c(n.marked,tlocs,2))
       for(i in 1:n.marked){
         for(j in 1:tlocs){
-          locs[i,j,]=c(rnorm(1,s[IDmarked[i],1],sigma),rnorm(1,s[IDmarked[i],2],sigma))
+          locs[i,j,]=c(rnorm(1,s[ID.marked[i],1],sigma),rnorm(1,s[ID.marked[i],2],sigma))
         }
       }
     }else{
@@ -340,21 +340,25 @@ sim.SMR.IDcov<-
     #disassemble y.marked
     G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
-    IDmarked=rep(NA,sum(y.marked))
-    idx=1
-    for(i in 1:n.marked){
-      for(j in 1:J){
-        for(k in 1:K){
-          if(y.marked[i,j,k]>0){
-            for(l in 1:y.marked[i,j,k]){
-              y.marked.ID[idx,j,k]=1
-              IDmarked[idx]=i
-              G.marked.ID[idx,]=G.marked[i,]
-              idx=idx+1
+    if(sum(y.marked)>0){
+      ID.marked=rep(NA,sum(y.marked))
+      idx=1
+      for(i in 1:n.marked){
+        for(j in 1:J){
+          for(k in 1:K){
+            if(y.marked[i,j,k]>0){
+              for(l in 1:y.marked[i,j,k]){
+                y.marked.ID[idx,j,k]=1
+                ID.marked[idx]=i
+                G.marked.ID[idx,]=G.marked[i,]
+                idx=idx+1
+              }
             }
           }
         }
       }
+    }else{
+      ID.marked=c()
     }
     
     n.samp1=nrow(y.marked.ID) #1
@@ -381,7 +385,7 @@ sim.SMR.IDcov<-
                 rep("markednoID",n.samp2),
                 rep("unmarked",n.samp3),
                 rep("unk",n.samp4))
-    ID=IDmarked
+    ID=ID.marked
     if(n.samp2>0){
       ID=c(ID,IDmnoID)
     }
@@ -406,7 +410,7 @@ sim.SMR.IDcov<-
     }
     
 
-    out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=IDmarked, #observed data
+    out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
               G.marked=G.marked,G.obs=G.obs, #observed IDcov data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,IDlist=list(n.cat=n.cat,IDcovs=IDcovs),
               y=y,s=s, ID=ID,#true data
