@@ -19,6 +19,9 @@ init.SMR.IDcov.DF=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstyp
   buff<- data$buff
   M.both=M1+M2
   locs=data$locs
+  if(M1==1){ #restructure as array if only 1 dude
+    locs=array(locs,dim=c(1,dim(locs)))
+  }
   G.marked=data$G.marked
   G.obs=data$G.obs
   n.cat=data$IDlist$n.cat
@@ -363,8 +366,13 @@ init.SMR.IDcov.DF=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstyp
   
   if(!is.null(dim(data$locs))){
     max.locs=dim(locs)[2]
-    tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
-    n.locs.ind=rowSums(!is.na(locs[,,1]))
+    if(M1>1){
+      tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
+      n.locs.ind=rowSums(!is.na(locs[,,1]))
+    }else{
+      tel.inds=which(sum(is.na(locs[,,1]))<max.locs)
+      n.locs.ind=sum(!is.na(locs[,,1]))
+    }
     print("using telemetry to initialize telmetered s. Remove from data if not using in the model.")
     #update s starts for telemetry guys
     for(i in tel.inds){
