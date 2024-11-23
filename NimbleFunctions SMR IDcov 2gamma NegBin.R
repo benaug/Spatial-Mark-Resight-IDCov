@@ -34,8 +34,8 @@ dNBVector <- nimbleFunction(
 rNBVector <- nimbleFunction(
   run = function(n = integer(0),p = double(1),theta.d = double(1), z = double(0)) {
     returnType(double(1))
-    J=nimDim(p)[1]
-    out=numeric(J,value=0)
+    J <- nimDim(p)[1]
+    out <- numeric(J,value=0)
     return(out)
   }
 )
@@ -45,8 +45,8 @@ dmulti2 <- nimbleFunction(
   run = function(x = double(2), size = double(1), prob = double(1), capcounts = double(0),
                  log = integer(0)) {
     returnType(double(0))
-    levels=nimDim(prob)[1]
-    J=nimDim(size)[1]
+    levels <- nimDim(prob)[1]
+    J <- nimDim(size)[1]
     if(capcounts==0){
       return(0)
     }else{
@@ -65,8 +65,8 @@ dmulti2 <- nimbleFunction(
 rmulti2 <- nimbleFunction(
   run = function(n=integer(0),size = double(1), prob = double(1), capcounts = double(0)) {
     returnType(double(2))
-    J=nimDim(size)[1]
-    out=matrix(J,3,value=0)
+    J <- nimDim(size)[1]
+    out <- matrix(J,3,value=0)
     return(out)
   }
 )
@@ -77,9 +77,9 @@ Getcapcounts <- nimbleFunction(
     returnType(double(1))
     M.both <- nimDim(y.full)[1]
     J <- nimDim(y.full)[2]
-    capcounts=numeric(M.both, value = 0)
+    capcounts <- numeric(M.both, value = 0)
     for(i in 1:M.both){
-      capcounts[i]=sum(y.full[i,1:J])
+      capcounts[i] <- sum(y.full[i,1:J])
     }
     return(capcounts)
   }
@@ -153,9 +153,9 @@ GSampler <- nimbleFunction(
 IDSampler <- nimbleFunction(
   contains = sampler_BASE,
   setup = function(model, mvSaved, target, control) {
-    M1<-control$M1
-    M2<-control$M2
-    M.both<-control$M.both
+    M1 <- control$M1
+    M2 <- control$M2
+    M.both <- control$M.both
     J <- control$J
     K1D <- control$K1D
     n.cat <- control$n.cat
@@ -175,19 +175,19 @@ IDSampler <- nimbleFunction(
     y.event <- model$y.event
     
     #precalculate match. Does sample l match individual i?
-    match=matrix(TRUE,nrow=n.samples,ncol=M.both) #start with all TRUE
+    match <- matrix(TRUE,nrow=n.samples,ncol=M.both) #start with all TRUE
     for(l in (n.fixed+1):n.samples){
       if(G.obs[l,1]==1){#if marked no ID sample
-        match[l,(M1+1):M.both]=FALSE #can't match unmarked guys
+        match[l,(M1+1):M.both] <- FALSE #can't match unmarked guys
         for(i in 1:M1){ #won't match all marked guys
           if(z[i]==0){#no match if z off
-            match[l,i]=FALSE
+            match[l,i] <- FALSE
           }else{
             for(m in 2:n.cat){
               if(match[l,i]==TRUE){#so we abort when switched to false
                 if(G.obs[l,m]!=0){#was sample l for cov m observed? If not, it matches
                   if(G.obs[l,m]!=G.true[i,m]){#if so, does it match the value for individual i?
-                    match[l,i]=FALSE
+                    match[l,i] <- FALSE
                   }
                 }
               }
@@ -195,16 +195,16 @@ IDSampler <- nimbleFunction(
           }
         }
       }else if(G.obs[l,1]==2){ #if unmarked sample
-        match[l,1:M1]=FALSE #can't match marked guys
+        match[l,1:M1] <- FALSE #can't match marked guys
         for(i in (M1+1):M.both){#won't match all unmarked guys
           if(z[i]==0){#no match if z off
-            match[l,i]=FALSE
+            match[l,i] <- FALSE
           }else{
             for(m in 2:n.cat){
               if(match[l,i]==TRUE){#so we abort when switched to false
                 if(G.obs[l,m]!=0){#was sample l for cov m observed? If not, it matches
                   if(G.obs[l,m]!=G.true[i,m]){#if so, does it match the value for individual i?
-                    match[l,i]=FALSE
+                    match[l,i] <- FALSE
                   }
                 }
               }
@@ -214,13 +214,13 @@ IDSampler <- nimbleFunction(
       }else{ #unknown mark status sample can match any guy
         for(i in 1:M.both){#but not all
           if(z[i]==0){#no match if z off
-            match[l,i]=FALSE
+            match[l,i] <- FALSE
           }else{
             for(m in 2:n.cat){
               if(match[l,i]==TRUE){#so we abort when switched to false
                 if(G.obs[l,m]!=0){#was sample l for cov m observed? If not, it matches
                   if(G.obs[l,m]!=G.true[i,m]){#if so, does it match the value for individual i?
-                    match[l,i]=FALSE
+                    match[l,i] <- FALSE
                   }
                 }
               }
@@ -237,7 +237,7 @@ IDSampler <- nimbleFunction(
       if(z[i]==1){
         for(j in 1:J) {
           #if theta is a function of individual or trap covariates, need to fix the line below, e.g., size=model$theta[i,j]*model$K1D[j]
-          ll.y[i,j] <-  dnbinom(y.full[i,j],size=model$theta.d[1]*model$K1D[j],prob=model$p[i,j], log = TRUE)
+          ll.y[i,j] <- dnbinom(y.full[i,j],size=model$theta.d[1]*model$K1D[j],prob=model$p[i,j], log = TRUE)
         }
       }
     }
@@ -265,60 +265,60 @@ IDSampler <- nimbleFunction(
     
     ###update IDs
     for(l in (n.fixed+1):n.samples){#for all samples without known IDs
-      ID.cand=ID.curr
-      y.full.cand=y.full
-      y.event.cand=y.event
-      propprobs=model$lam[1:M.both,this.j[l]]
+      ID.cand <- ID.curr
+      y.full.cand <- y.full
+      y.event.cand <- y.event
+      propprobs <- model$lam[1:M.both,this.j[l]]
       for(i in 1:M.both){ #zero out nonmatches and z=0
         if(!match[l,i] | z[i]==0){
-          propprobs[i]=0
+          propprobs[i] <- 0
         }
       }
-      denom=sum(propprobs) #abort if propprobs sum to 0. No matches anywhere nearby.
+      denom <- sum(propprobs) #abort if propprobs sum to 0. No matches anywhere nearby.
       if(denom>0){
-        propprobs=propprobs/denom
-        ID.cand[l]=rcat(1,prob=propprobs)
+        propprobs <- propprobs/denom
+        ID.cand[l] <- rcat(1,prob=propprobs)
         if(ID.cand[l]!=ID.curr[l]){
-          swapped=c(ID.curr[l],ID.cand[l])
+          swapped <- c(ID.curr[l],ID.cand[l])
           #new sample proposal probabilities
-          forprob=propprobs[swapped[2]]
-          backprob=propprobs[swapped[1]]
+          forprob <- propprobs[swapped[2]]
+          backprob <- propprobs[swapped[1]]
           #new y.true's - move sample from ID to ID.cand
-          y.event.cand[ID.curr[l],this.j[l],samp.type[l]]=y.event[ID.curr[l],this.j[l],samp.type[l]]-1
-          y.event.cand[ID.cand[l],this.j[l],samp.type[l]]=y.event[ID.cand[l],this.j[l],samp.type[l]]+1
-          y.full.cand[ID.curr[l],this.j[l]]=y.full[ID.curr[l],this.j[l]]-1
-          y.full.cand[ID.cand[l],this.j[l]]=y.full[ID.cand[l],this.j[l]]+1
+          y.event.cand[ID.curr[l],this.j[l],samp.type[l]] <- y.event[ID.curr[l],this.j[l],samp.type[l]]-1
+          y.event.cand[ID.cand[l],this.j[l],samp.type[l]] <- y.event[ID.cand[l],this.j[l],samp.type[l]]+1
+          y.full.cand[ID.curr[l],this.j[l]] <- y.full[ID.curr[l],this.j[l]]-1
+          y.full.cand[ID.cand[l],this.j[l]] <- y.full[ID.cand[l],this.j[l]]+1
           #if theta is a function of individual or trap covariates, need to fix these 2 lines below, e.g., size=model$theta[swapped[1],this.j[l]]*model$K1D[this.j[l]]
-          ll.y.cand[swapped[1],this.j[l]]=dnbinom(y.full.cand[swapped[1],this.j[l]],size=model$theta.d[1]*model$K1D[this.j[l]],prob=model$p[swapped[1],this.j[l]],log=TRUE)
-          ll.y.cand[swapped[2],this.j[l]]=dnbinom(y.full.cand[swapped[2],this.j[l]],size=model$theta.d[1]*model$K1D[this.j[l]],prob=model$p[swapped[2],this.j[l]],log=TRUE)          #old ID theta likelihood
+          ll.y.cand[swapped[1],this.j[l]] <- dnbinom(y.full.cand[swapped[1],this.j[l]],size=model$theta.d[1]*model$K1D[this.j[l]],prob=model$p[swapped[1],this.j[l]],log=TRUE)
+          ll.y.cand[swapped[2],this.j[l]] <- dnbinom(y.full.cand[swapped[2],this.j[l]],size=model$theta.d[1]*model$K1D[this.j[l]],prob=model$p[swapped[2],this.j[l]],log=TRUE)          #old ID theta likelihood
           if(swapped[1]<=M1){#marked guy
             if(y.full.cand[swapped[1],this.j[l]]==0){
-              ll.y.event.cand[swapped[1],this.j[l]]=0
+              ll.y.event.cand[swapped[1],this.j[l]] <- 0
             }else{
-              ll.y.event.cand[swapped[1],this.j[l]]=dmulti(y.event.cand[swapped[1],this.j[l],1:3],
+              ll.y.event.cand[swapped[1],this.j[l]] <- dmulti(y.event.cand[swapped[1],this.j[l],1:3],
                                                            y.full.cand[swapped[1],this.j[l]],model$theta.marked,log=TRUE)
             }
           }else{#unmarked guy
             if(y.full.cand[swapped[1],this.j[l]]==0){
-              ll.y.event.cand[swapped[1],this.j[l]]=0
+              ll.y.event.cand[swapped[1],this.j[l]] <- 0
             }else{
-              ll.y.event.cand[swapped[1],this.j[l]]=dmulti(y.event.cand[swapped[1],this.j[l],1:3],
+              ll.y.event.cand[swapped[1],this.j[l]] <- dmulti(y.event.cand[swapped[1],this.j[l],1:3],
                                                            y.full.cand[swapped[1],this.j[l]],model$theta.unmarked,log=TRUE)
             }
           }
           #new ID theta likelihood
           if(swapped[2]<=M1){#marked guy
             if(y.full.cand[swapped[2],this.j[l]]==0){
-              ll.y.event.cand[swapped[2],this.j[l]]=0
+              ll.y.event.cand[swapped[2],this.j[l]] <- 0
             }else{
-              ll.y.event.cand[swapped[2],this.j[l]]=dmulti(y.event.cand[swapped[2],this.j[l],1:3],
+              ll.y.event.cand[swapped[2],this.j[l]] <- dmulti(y.event.cand[swapped[2],this.j[l],1:3],
                                                            y.full.cand[swapped[2],this.j[l]],model$theta.marked,log=TRUE)
             }
           }else{#unmarked guy
             if(y.full.cand[swapped[2],this.j[l]]==0){
-              ll.y.event.cand[swapped[2],this.j[l]]=0
+              ll.y.event.cand[swapped[2],this.j[l]] <- 0
             }else{
-              ll.y.event.cand[swapped[2],this.j[l]]=dmulti(y.event.cand[swapped[2],this.j[l],1:3],
+              ll.y.event.cand[swapped[2],this.j[l]] <- dmulti(y.event.cand[swapped[2],this.j[l],1:3],
                                                            y.full.cand[swapped[2],this.j[l]],model$theta.unmarked,log=TRUE)
             }
           }
@@ -326,9 +326,9 @@ IDSampler <- nimbleFunction(
           #P(select a sample of this type for this ID)*P(select this j|sample of this type and this ID)
           #n.samples cancels out in MH ratio. Wrong number of samples (includes known ID that are not updated), but doesn't matter.
           #Including for clarity
-          focalprob=(sum(ID.curr==swapped[1]&samp.type==samp.type[l])/n.samples)*
+          focalprob <- (sum(ID.curr==swapped[1]&samp.type==samp.type[l])/n.samples)*
             y.event[swapped[1],this.j[l],samp.type[l]]/sum(y.event[swapped[1],1:J,samp.type[l]])
-          focalbackprob=(sum(ID.cand==swapped[2]&samp.type==samp.type[l])/n.samples)*
+          focalbackprob <- (sum(ID.cand==swapped[2]&samp.type==samp.type[l])/n.samples)*
             y.event.cand[swapped[2],this.j[l],samp.type[l]]/sum(y.event.cand[swapped[2],1:J,samp.type[l]])
           
           #sum log likelihoods and do MH step
@@ -337,27 +337,27 @@ IDSampler <- nimbleFunction(
           log_MH_ratio <- (lp_proposed+log(backprob)+log(focalbackprob)) - (lp_initial+log(forprob)+log(focalprob))
           accept <- decide(log_MH_ratio)
           if(accept){
-            y.event[swapped[1],this.j[l],samp.type[l]]=y.event.cand[swapped[1],this.j[l],samp.type[l]]
-            y.event[swapped[2],this.j[l],samp.type[l]]=y.event.cand[swapped[2],this.j[l],samp.type[l]]
-            y.full[swapped[1],this.j[l]]=y.full.cand[swapped[1],this.j[l]]
-            y.full[swapped[2],this.j[l]]=y.full.cand[swapped[2],this.j[l]]
-            ll.y[swapped[1],this.j[l]]=ll.y.cand[swapped[1],this.j[l]]
-            ll.y[swapped[2],this.j[l]]=ll.y.cand[swapped[2],this.j[l]]
-            ll.y.event[swapped[1],this.j[l]]=ll.y.event.cand[swapped[1],this.j[l]]
-            ll.y.event[swapped[2],this.j[l]]=ll.y.event.cand[swapped[2],this.j[l]]
-            ID.curr[l]=ID.cand[l]
+            y.event[swapped[1],this.j[l],samp.type[l]] <- y.event.cand[swapped[1],this.j[l],samp.type[l]]
+            y.event[swapped[2],this.j[l],samp.type[l]] <- y.event.cand[swapped[2],this.j[l],samp.type[l]]
+            y.full[swapped[1],this.j[l]] <- y.full.cand[swapped[1],this.j[l]]
+            y.full[swapped[2],this.j[l]] <- y.full.cand[swapped[2],this.j[l]]
+            ll.y[swapped[1],this.j[l]] <- ll.y.cand[swapped[1],this.j[l]]
+            ll.y[swapped[2],this.j[l]] <- ll.y.cand[swapped[2],this.j[l]]
+            ll.y.event[swapped[1],this.j[l]] <- ll.y.event.cand[swapped[1],this.j[l]]
+            ll.y.event[swapped[2],this.j[l]] <- ll.y.event.cand[swapped[2],this.j[l]]
+            ID.curr[l] <- ID.cand[l]
           }
         }
       }
     }
     #update G.latent after ID changes
-    G.latent=matrix(1,nrow=M.both,ncol=n.cat)
-    G.latent[1:n.marked,1:n.cat]=G.latent.marked #known ID sample latent status contributions precalculated
-    G.latent[1:M.both,1]=0 #never change column for marked status
+    G.latent <- matrix(1,nrow=M.both,ncol=n.cat)
+    G.latent[1:n.marked,1:n.cat] <- G.latent.marked #known ID sample latent status contributions precalculated
+    G.latent[1:M.both,1] <- 0 #never change column for marked status
     for(l in (n.fixed+1):n.samples){
       for(m in 2:n.cat){
         if(G.obs[l,m]!=0){ #if this sample is not latent
-          G.latent[ID.curr[l],m]=0 #then its ID is not latent
+          G.latent[ID.curr[l],m] <- 0 #then its ID is not latent
         }
       }
     }

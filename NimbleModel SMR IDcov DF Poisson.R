@@ -1,12 +1,12 @@
 NimModel <- nimbleCode({
   #detection function priors as function of first ID cov (excluding marked status, which is 1st)
   for(i in 1:n.levels[2]){
-    lam0[i]~dunif(0,15)
-    sigma[i]~dunif(0,10)
+    lam0[i] ~ dunif(0,15)
+    sigma[i] ~ dunif(0,10)
   }
   #data augmentation priors for marked (1) and unmarked (2) individuals
-  psi1~dunif(0,1)
-  psi2~dunif(0,1)
+  psi1 ~ dunif(0,1)
+  psi2 ~ dunif(0,1)
   #sample type observation model priors (Dirichlet)
   alpha.marked[1] <- 1
   alpha.marked[2] <- 1
@@ -44,7 +44,7 @@ NimModel <- nimbleCode({
   for(i in (M1+1):M.both){
     z[i] ~ dbern(psi2)
     for(m in 1:n.cat){
-      G.true[i,m]~dcat(gammaMat[m,1:n.levels[m]])
+      G.true[i,m] ~dcat(gammaMat[m,1:n.levels[m]])
     }
     s[i,1] ~ dunif(xlim[1],xlim[2])
     s[i,2] ~ dunif(ylim[1],ylim[2])

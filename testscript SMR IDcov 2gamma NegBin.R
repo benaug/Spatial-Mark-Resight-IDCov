@@ -25,7 +25,7 @@
 #This sampler also handles telemetry for marked individuals in the "premarked" scenario. Don't try
 #to use telemetry with "natural" scenario. Not realistic and I'm not sure what my code will do!
 
-#p[i,j,k] = theta.d/(theta.d+lam[i,j,k])
+#p[i,j,k] <- theta.d/(theta.d+lam[i,j,k])
 #y[i,j,k] ~ Negbin(lam[i,j,k],p[i,j,k])
 #y.event[i,j,k,1:3] ~ Multinomial(theta.marked[1:3],y[i,j,k]) for marked i
 #y.event[i,j,k,1:3] ~ Multinomial(theta.unmarked[1:3],y[i,j,k]) for unmarked i
@@ -49,35 +49,35 @@ nimbleOptions(determinePredictiveNodesInModel = FALSE)
 # nimble:::setNimbleOption('MCMCjointlySamplePredictiveBranches', FALSE)
 
 ####Simulate some data####
-N=78
-n.marked=20
-lam0=0.25
-sigma=0.5
-theta.d=0.05 #overdispersion parameter, smaller is more overdispersion
-K=10 #number of occasions
-buff=3 #state space buffer
-X<- expand.grid(3:11,3:11) #make a trapping array
+N <- 78
+n.marked <- 20
+lam0 <- 0.25
+sigma <- 0.5
+theta.d <- 0.05 #overdispersion parameter, smaller is more overdispersion
+K <- 10 #number of occasions
+buff <- 3 #state space buffer
+X <- expand.grid(3:11,3:11) #make a trapping array
 #theta is probability of observing each sample type for marked and unmarked individuals
-theta.marked=c(1,0,0) #P(ID, Marked no ID, unk status). must sum to 1
-theta.unmarked=1 #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
-marktype="premarked" #are individuals premarked, or naturally marked?
-# marktype="natural"
-obstype="negbin"
-tlocs=0 #number of telemetry locs/marked individual. For "premarked"
+theta.marked <- c(1,0,0) #P(ID, Marked no ID, unk status). must sum to 1
+theta.unmarked <- 1 #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
+marktype <- "premarked" #are individuals premarked, or naturally marked?
+# marktype <- "natural"
+obstype <- "negbin"
+tlocs <- 0 #number of telemetry locs/marked individual. For "premarked"
 #categorical ID covariate stuff
-n.cat=2  #number of ID categories (not including marked status)
-gamma=IDcovs=vector("list",n.cat) #population frequencies of each category level. Assume equal here.
-n.levels=rep(2,n.cat) #number of levels per IDcat
+n.cat <- 2  #number of ID categories (not including marked status)
+gamma <- IDcovs <- vector("list",n.cat) #population frequencies of each category level. Assume equal here.
+n.levels <- rep(2,n.cat) #number of levels per IDcat
 if(all(n.levels==1))stop("This specification has no categorial ID covariates. Use testscript for regular SMR.")
 for(i in 1:n.cat){
-  gamma[[i]]=rep(1/n.levels[i],n.levels[i])
-  IDcovs[[i]]=1:n.levels[i]
+  gamma[[i]] <- rep(1/n.levels[i],n.levels[i])
+  IDcovs[[i]] <- 1:n.levels[i]
 }
-theta.cat=rep(1,n.cat)#sample-level IDcov observation probabilities. Data missing at random if <1. 
+theta.cat <- rep(1,n.cat)#sample-level IDcov observation probabilities. Data missing at random if <1. 
 #data simulator assumes all IDcovs known for marked inds. MCMC sampler accepts missing values coded as 0.
 
 
-data=sim.SMR.IDcov(N=N,n.marked=n.marked,marktype=marktype,
+data <- sim.SMR.IDcov(N=N,n.marked=n.marked,marktype=marktype,
              theta.marked=theta.marked,theta.unmarked=theta.unmarked,
              lam0=lam0,sigma=sigma,theta.d=theta.d,K=K,X=X,buff=buff,tlocs=tlocs,
              obstype=obstype,
@@ -101,48 +101,48 @@ str(data$locs) #possibly telemetry. n.marked x tlocs x 2 array (or ragged array 
 #in latter case, order telemetry points first, then NAs
 
 #note, the sample-level data is this: the type, the trap of capture, the observed ID covs
-tmp=data.frame(samp.type=data$samp.type,this.j=data$this.j,G.obs=data$G.obs)
+tmp <- data.frame(samp.type=data$samp.type,this.j=data$this.j,G.obs=data$G.obs)
 head(tmp)
 
 ####Fit model in Nimble####
 if(marktype=="natural"){
-  M1=40 #Augmentation level for marked.
+  M1 <- 40 #Augmentation level for marked.
 }else{
-  M1=n.marked #Set to n.marked if premarked. psi1 will be estimated, but can be ignored.
+  M1 <- n.marked #Set to n.marked if premarked. psi1 will be estimated, but can be ignored.
 }
-M2=125 #Augmentation level for unmarked
+M2 <- 125 #Augmentation level for unmarked
 #Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
 #and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
-M.both=M1+M2
+M.both <- M1+M2
 #Need some inits to initialize data
 #Use reasonable inits for lam0 and sigma since we check to make sure initial observation
 #model likelihood is finite
 #also use this function checks to make sure theta.marked and theta.unmarked inits are in
 #the correct structure. 
 #Initializing both marked and unmarked inds with same gamma
-inits=list(lam0=lam0,sigma=sigma,theta.d=1,gamma=gamma)
+inits <- list(lam0=lam0,sigma=sigma,theta.d=1,gamma=gamma)
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
-nimbuild=init.SMR.IDcov(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="negbin")
+nimbuild <- init.SMR.IDcov(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="negbin")
 
 #We include marked/unmarked status as the first ID category for the Nimble sampler, so add 1
-n.cat.nim=n.cat+1
+n.cat.nim <- n.cat+1
 
 #we are going to stuff the gamma values into a ragged matrix for use in Nimble.
 #Also, we are going to include gamma values for marked status in the first row, but we are
 #not actually going to use them. This makes Nimble happy--I tried not including these, but 
 #Nimble changes the inits I give it for marked status. By not providing a prior (in the model code) on these
 #probabilities, they are not updated
-gammaMat=rbind(c(0.5,0.5),nimbuild$gammaMat)
-n.levels.nim=c(2,n.levels)
+gammaMat <- rbind(c(0.5,0.5),nimbuild$gammaMat)
+n.levels.nim <- c(2,n.levels)
 
 #make G.true data and initial values. First column of G.true is the marked status, which is known
 #for all individuals
-G.true.init=nimbuild$G.true
-G.true.init[,1]=NA #Column 1 is data
-G.true.data=nimbuild$G.true
-G.true.data[,2:n.cat.nim]=NA #columns 2:n.cat.nim are latent. Fixed values for marked inds not updated during MCMC
+G.true.init <- nimbuild$G.true
+G.true.init[,1] <- NA #Column 1 is data
+G.true.data <- nimbuild$G.true
+G.true.data[,2:n.cat.nim] <- NA #columns 2:n.cat.nim are latent. Fixed values for marked inds not updated during MCMC
 
 #inits for nimble
 #full inits. Nimble can initialize psi1 and psi2, but if sigma and lam0 initialized too far away
@@ -154,32 +154,32 @@ Niminits <- list(z=nimbuild$z,s=nimbuild$s,G.true=G.true.init,ID=nimbuild$ID,cap
                  lam0=inits$lam0,sigma=inits$sigma,theta.d=inits$theta.d)
 
 #constants for Nimble
-J=nrow(data$X)
+J <- nrow(data$X)
 # constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
 #                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
-z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
+z.data <- c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 
-# Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+# Nimdata <- list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
 #               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
 
 #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+constants <- list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
                 n.cat=n.cat.nim,n.levels=n.levels.nim,xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
-Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+Nimdata <- list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
               G.true=G.true.data,ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
               locs=data$locs)
 
 # set parameters to monitor
-parameters=c('psi1','psi2','lam0','sigma','theta.d','theta.marked','theta.unmarked','gammaMat.M',
+parameters <- c('psi1','psi2','lam0','sigma','theta.d','theta.marked','theta.unmarked','gammaMat.M',
               'gammaMat.UM','n.M','n.UM','N.M','N.UM','N.tot')
 #other things we can monitor with separate thinning rate
-parameters2=c("ID","s")
+parameters2 <- c("ID","s")
 
 # Build the model, configure the mcmc, and compile
-start.time<-Sys.time()
+start.time <- Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,
                       inits=Niminits)
 conf <- configureMCMC(Rmodel,monitors=parameters, thin=1,
@@ -239,14 +239,14 @@ Cmodel <- compileNimble(Rmodel)
 Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 
 # Run the model.
-start.time2<-Sys.time()
+start.time2 <- Sys.time()
 Cmcmc$run(2500,reset=FALSE) #short run for demonstration. can keep running this line to get more samples
-end.time<-Sys.time()
+end.time <- Sys.time()
 end.time-start.time  # total time for compilation, replacing samplers, and fitting
 end.time-start.time2 # post-compilation run time
 
 library(coda)
-mvSamples = as.matrix(Cmcmc$mvSamples)
+mvSamples <- as.matrix(Cmcmc$mvSamples)
 plot(mcmc(mvSamples[2:nrow(mvSamples),]))
 
 data$n.M #true number of captured marked individuals
@@ -259,10 +259,10 @@ data$n.UM #true number of captured unmarked individuals
 ####Look an posterior pairwise sample match probs
 #assuming you monitored ID in 2nd monitor
 library(MCMCglmm)
-mvSamples2 = as.matrix(Cmcmc$mvSamples2)
-idx=grep("ID",colnames(mvSamples2))
-burnin=10 #set appropriately...
-IDpost=posterior.mode(mcmc(mvSamples2[burnin:nrow(mvSamples2),idx]))
+mvSamples2 <- as.matrix(Cmcmc$mvSamples2)
+idx <- grep("ID",colnames(mvSamples2))
+burnin <- 10 #set appropriately...
+IDpost <- posterior.mode(mcmc(mvSamples2[burnin:nrow(mvSamples2),idx]))
 #For simulated data sets, comparing posterior mode ID to truth.
 #Numbers will not be the same (except marked individuals), but all samples with same true ID will have
 #same ID in posterior mode when posterior mode is exactly correct. Numbers just don't match up.
@@ -270,20 +270,20 @@ cbind(data$ID,round(IDpost))
 
 #calculate posterior probability of pairwise sample matches
 #P(sample x belongs to same individual as sample y)
-n.samples=length(data$this.j)
-n.iter=nrow(mvSamples2)
-pair.probs=matrix(NA,n.samples,n.samples)
+n.samples <- length(data$this.j)
+n.iter <- nrow(mvSamples2)
+pair.probs <- matrix(NA,n.samples,n.samples)
 for(i in 1:n.samples){
   for(j in 1:n.samples){
-    count=0
+    count <- 0
     for(iter in burnin:n.iter){
-      count=count+1*(mvSamples2[iter,idx[j]]==mvSamples2[iter,idx[i]])
+      count <- count+1*(mvSamples2[iter,idx[j]]==mvSamples2[iter,idx[i]])
     }
-    pair.probs[i,j]=count/(n.iter-burnin+1)
+    pair.probs[i,j] <- count/(n.iter-burnin+1)
   }
 }
 
-this.samp=1 #sample number to look at
+this.samp <- 1 #sample number to look at
 round(pair.probs[this.samp,],3) #probability this sample is from same individual as all other samples
 round(pair.probs[this.samp,data$ID==data$ID[this.samp]],3) #for simulated data, these are the other samples truly from same individual
 
@@ -293,15 +293,15 @@ round(pair.probs[this.samp,data$ID==data$ID[this.samp]],3) #for simulated data, 
 
 #Can look at activity centers. Can help make sure telmetry is formatted correctly.
 #telemetry individuals should have more precise AC ests, on average.
-burnin=20
-mvSamples2 = as.matrix(Cmcmc$mvSamples2)
-idx=grep("s",colnames(mvSamples2))
+burnin <- 20
+mvSamples2 <- as.matrix(Cmcmc$mvSamples2)
+idx <- grep("s",colnames(mvSamples2))
 #look at chains
 plot(mcmc(mvSamples2[burnin:nrow(mvSamples2),idx]))
 
 #plot at 1 at a time
 par(mfrow=c(1,1),ask=FALSE)
-this.i=1
+this.i <- 1
 plot(mvSamples2[burnin:nrow(mvSamples2),idx[this.i]],
      mvSamples2[burnin:nrow(mvSamples2),idx[this.i+M.both]],xlim=data$xlim,ylim=data$ylim)
 points(data$X,pch=4)

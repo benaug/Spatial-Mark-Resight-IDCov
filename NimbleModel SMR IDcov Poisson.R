@@ -1,24 +1,24 @@
 NimModel <- nimbleCode({
   #detection function priors
-  lam0~dunif(0,15)
-  sigma~dunif(0,10)
+  lam0 ~ dunif(0,15)
+  sigma ~ dunif(0,10)
   #data augmentation priors for marked (1) and unmarked (2) individuals
-  psi1~dunif(0,1)
-  psi2~dunif(0,1)
+  psi1 ~ dunif(0,1)
+  psi2 ~ dunif(0,1)
   #sample type observation model priors (Dirichlet)
   alpha.marked[1] <- 1
   alpha.marked[2] <- 1
   alpha.marked[3] <- 1
   alpha.unmarked[1] <- 1
   alpha.unmarked[2] <- 1
-  theta.marked[1:3]~ddirch(alpha.marked[1:3])
+  theta.marked[1:3] ~ ddirch(alpha.marked[1:3])
   theta.unmarked[1] <- 0
-  theta.unmarked[2:3]~ddirch(alpha.unmarked[1:2])
+  theta.unmarked[2:3] ~ ddirch(alpha.unmarked[1:2])
   
   #categorical ID covariate priors
   for(m in 2:n.cat){ #skip first cat for marked/unmarked
     alpha[m,1:n.levels[m]] <- 1 # prior parameters
-    gammaMat[m,1:n.levels[m]]~ddirch(alpha[m,1:n.levels[m]])
+    gammaMat[m,1:n.levels[m]] ~ ddirch(alpha[m,1:n.levels[m]])
   }
 
   #likelihoods (except for s/z priors)
@@ -26,7 +26,7 @@ NimModel <- nimbleCode({
   for(i in 1:M1) {
     z[i] ~ dbern(psi1)
     for(m in 1:n.cat){
-      G.true[i,m]~dcat(gammaMat[m,1:n.levels[m]])
+      G.true[i,m] ~ dcat(gammaMat[m,1:n.levels[m]])
     }
     s[i,1] ~ dunif(xlim[1],xlim[2])
     s[i,2] ~ dunif(ylim[1],ylim[2])
@@ -40,7 +40,7 @@ NimModel <- nimbleCode({
   for(i in (M1+1):M.both){
     z[i] ~ dbern(psi2)
     for(m in 1:n.cat){
-      G.true[i,m]~dcat(gammaMat[m,1:n.levels[m]])
+      G.true[i,m] ~ dcat(gammaMat[m,1:n.levels[m]])
     }
     s[i,1] ~ dunif(xlim[1],xlim[2])
     s[i,2] ~ dunif(ylim[1],ylim[2])
@@ -53,8 +53,8 @@ NimModel <- nimbleCode({
   # #If you have telemetry
   # for(i in 1:n.tel.inds){
   #   for(m in 1:n.locs.ind[i]){
-  #     locs[tel.inds[i],m,1]~dnorm(s[tel.inds[i],1],sd=sigma)
-  #     locs[tel.inds[i],m,2]~dnorm(s[tel.inds[i],2],sd=sigma)
+  #     locs[tel.inds[i],m,1] ~ dnorm(s[tel.inds[i],1],sd=sigma)
+  #     locs[tel.inds[i],m,2] ~ dnorm(s[tel.inds[i],2],sd=sigma)
   #   }
   # }
   
