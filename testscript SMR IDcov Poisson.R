@@ -232,7 +232,7 @@ end.time-start.time2 # post-compilation run time
 
 library(coda)
 mvSamples = as.matrix(Cmcmc$mvSamples)
-plot(mcmc(mvSamples[2:nrow(mvSamples),]))
+plot(mcmc(mvSamples[25:nrow(mvSamples),]))
 
 data$n.M #true number of captured marked individuals
 data$n.UM #true number of captured unmarked individuals
