@@ -11,6 +11,8 @@ There are 8 testscripts:
 
 5-8 are the same as 1-4 except using a negative binomial observation model.
 
+OK, there are now more than 8. Multisession versions use count prior data augmentation: https://github.com/benaug/SCR-Count-Prior-Data-Augmentation
+
 You can do generalized SMR by appending an explicit marking process.
 
 Disclaimer: Code has been tested thoroughly, but I restructured it to better match the other latent ID SCR samplers on my github. I don't think I screwed anything up in the process, but will retest soon.
