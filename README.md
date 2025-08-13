@@ -11,7 +11,7 @@ There are 8 testscripts:
 
 5-8 are the same as 1-4 except using a negative binomial observation model.
 
-OK, there are now more than 8. Multisession versions use count prior data augmentation: https://github.com/benaug/SCR-Count-Prior-Data-Augmentation
+OK, there are now more than 8. Multisession versions use N-prior data augmentation: https://github.com/benaug/SCR-N-Prior-Data-Augmentation
 
 You can do generalized SMR by appending an explicit marking process.
 
